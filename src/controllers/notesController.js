@@ -28,24 +28,28 @@ export const getAllNotes = async (req, res, next) => {
       filter.$text = { $search: search };
     }
 
-    const totalNotes = await Note.countDocuments(filter);
+    const skip = (page - 1) * perPage;
 
-    const totalPages = totalNotes === 0 ? 0 : Math.ceil(totalNotes / perPage);
-
-    let query = Note.find(filter);
+    let findQuery = Note.find(filter);
 
     if (search) {
-      query = query
-        .select({ score: { $meta: 'textScore' } })
+      findQuery = findQuery
+        .select({ score: { $meta: 'textScore' }, title: 1, content: 1, tag: 1, createdAt: 1, updatedAt: 1 })
         .sort({ score: { $meta: 'textScore' } });
     } else {
-      query = query.sort({ createdAt: -1 });
+      findQuery = findQuery
+        .select({ title: 1, content: 1, tag: 1, createdAt: 1, updatedAt: 1 })
+        .sort({ createdAt: -1 });
     }
 
-    const skip = (page - 1) * perPage;
-    query = query.skip(skip).limit(perPage);
+    const pagedQuery = findQuery.skip(skip).limit(perPage);
 
-    const notes = await query.exec();
+    const [totalNotes, notes] = await Promise.all([
+      Note.countDocuments(filter),
+      pagedQuery.exec(),
+    ]);
+
+    const totalPages = totalNotes === 0 ? 0 : Math.ceil(totalNotes / perPage);
 
     return res.status(200).json({
       page,
