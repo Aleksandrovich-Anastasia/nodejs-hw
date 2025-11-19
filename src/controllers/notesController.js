@@ -1,32 +1,17 @@
 import Note from '../models/note.js';
 import createHttpError from 'http-errors';
-import { TAGS } from '../constants/tags.js';
+
+const ALLOWED_FIELDS = ['title', 'content', 'tag'];
 
 export const getAllNotes = async (req, res, next) => {
   try {
     const { tag, search } = req.query;
-
-    let page = Number(req.query.page) || 1;
-    let perPage = Number(req.query.perPage) || 10;
-
-    if (!Number.isInteger(page) || page < 1) page = 1;
-    if (!Number.isInteger(perPage) || perPage < 1) perPage = 10;
-
-    const MAX_PER_PAGE = 100;
-    if (perPage > MAX_PER_PAGE) perPage = MAX_PER_PAGE;
+    const page = Number(req.query.page) || 1;
+    const perPage = Number(req.query.perPage) || 10;
 
     const filter = {};
-
-    if (tag) {
-      if (!TAGS.includes(tag)) {
-        throw createHttpError(400, `Invalid tag. Allowed tags: ${TAGS.join(', ')}`);
-      }
-      filter.tag = tag;
-    }
-
-    if (search) {
-      filter.$text = { $search: search };
-    }
+    if (tag) filter.tag = tag;
+    if (search) filter.$text = { $search: search };
 
     const skip = (page - 1) * perPage;
 
@@ -34,11 +19,24 @@ export const getAllNotes = async (req, res, next) => {
 
     if (search) {
       findQuery = findQuery
-        .select({ score: { $meta: 'textScore' }, title: 1, content: 1, tag: 1, createdAt: 1, updatedAt: 1 })
+        .select({
+          score: { $meta: 'textScore' },
+          title: 1,
+          content: 1,
+          tag: 1,
+          createdAt: 1,
+          updatedAt: 1,
+        })
         .sort({ score: { $meta: 'textScore' } });
     } else {
       findQuery = findQuery
-        .select({ title: 1, content: 1, tag: 1, createdAt: 1, updatedAt: 1 })
+        .select({
+          title: 1,
+          content: 1,
+          tag: 1,
+          createdAt: 1,
+          updatedAt: 1,
+        })
         .sort({ createdAt: -1 });
     }
 
@@ -66,7 +64,7 @@ export const getAllNotes = async (req, res, next) => {
 export const getNoteById = async (req, res, next) => {
   try {
     const { noteId } = req.params;
-    const note = await Note.findById(noteId);
+    const note = await Note.findById(noteId).exec();
     if (!note) throw createHttpError(404, 'Note not found');
     res.status(200).json(note);
   } catch (error) {
@@ -76,15 +74,14 @@ export const getNoteById = async (req, res, next) => {
 
 export const createNote = async (req, res, next) => {
   try {
-    const { title, content = '', tag = 'Todo' } = req.body;
-
-    if (!title) throw createHttpError(400, 'Title is required');
-
-    if (tag && !TAGS.includes(tag)) {
-      throw createHttpError(400, `Invalid tag. Allowed tags: ${TAGS.join(', ')}`);
+    const payload = {};
+    for (const key of ALLOWED_FIELDS) {
+      if (Object.prototype.hasOwnProperty.call(req.body, key)) {
+        payload[key] = req.body[key];
+      }
     }
 
-    const newNote = await Note.create({ title, content, tag });
+    const newNote = await Note.create(payload);
     res.status(201).json(newNote);
   } catch (error) {
     next(error);
@@ -94,7 +91,7 @@ export const createNote = async (req, res, next) => {
 export const deleteNote = async (req, res, next) => {
   try {
     const { noteId } = req.params;
-    const deletedNote = await Note.findByIdAndDelete(noteId);
+    const deletedNote = await Note.findByIdAndDelete(noteId).exec();
     if (!deletedNote) throw createHttpError(404, 'Note not found');
     res.status(200).json(deletedNote);
   } catch (error) {
@@ -105,16 +102,22 @@ export const deleteNote = async (req, res, next) => {
 export const updateNote = async (req, res, next) => {
   try {
     const { noteId } = req.params;
-    const update = req.body;
 
-    if (update.tag && !TAGS.includes(update.tag)) {
-      throw createHttpError(400, `Invalid tag. Allowed tags: ${TAGS.join(', ')}`);
+    const update = {};
+    for (const key of ALLOWED_FIELDS) {
+      if (Object.prototype.hasOwnProperty.call(req.body, key)) {
+        update[key] = req.body[key];
+      }
+    }
+
+    if (Object.keys(update).length === 0) {
+      throw createHttpError(400, 'Request body must contain at least one of: title, content, tag');
     }
 
     const updatedNote = await Note.findByIdAndUpdate(noteId, update, {
       new: true,
       runValidators: true,
-    });
+    }).exec();
 
     if (!updatedNote) throw createHttpError(404, 'Note not found');
     res.status(200).json(updatedNote);
