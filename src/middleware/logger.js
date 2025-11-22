@@ -1,15 +1,19 @@
 import pino from 'pino';
 import pinoHttp from 'pino-http';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 const logger = pinoHttp({
   logger: pino({
     level: 'info',
-    transport: {
-      target: 'pino-pretty',
-      options: {
-        colorize: true,
-      },
-    },
+    transport: !isProduction
+      ? {
+          target: 'pino-pretty',
+          options: {
+            colorize: true,
+          },
+        }
+      : undefined,
   }),
   serializers: {
     req(req) {
