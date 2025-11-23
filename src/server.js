@@ -20,19 +20,23 @@ await connectMongoDB();
 
 app.use(logger);
 app.use(express.json());
-app.use(cookieParser());       
-app.use(cors({
-  origin: true,
-  credentials: true,
-}));
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 
 app.get('/', (req, res) => res.send('OK'));
 
-app.use('/auth', authRouter);
-app.use('/notes', notesRouter);
+app.use(authRouter);
+app.use(notesRouter);
+
+app.use(notFoundHandler);
 
 app.use(celebrateErrors());
-app.use(notFoundHandler);
+
 app.use(errorHandler);
 
 app.listen(PORT, () => {
