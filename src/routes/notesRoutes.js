@@ -1,6 +1,5 @@
 import express from 'express';
 import { celebrate, Segments } from 'celebrate';
-
 import { authenticate } from '../middleware/authenticate.js';
 
 import {

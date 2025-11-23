@@ -26,8 +26,10 @@ app.use(cors({
   credentials: true,
 }));
 
-app.use(authRouter);          
-app.use(notesRouter);
+app.get('/', (req, res) => res.send('OK'));
+
+app.use('/auth', authRouter);
+app.use('/notes', notesRouter);
 
 app.use(celebrateErrors());
 app.use(notFoundHandler);
