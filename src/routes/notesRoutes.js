@@ -1,6 +1,8 @@
 import express from 'express';
 import { celebrate, Segments } from 'celebrate';
 
+import { authenticate } from '../middlewares/authenticate.js';
+
 import {
   getAllNotes,
   getNoteById,
@@ -17,6 +19,8 @@ import {
 } from '../validations/notesValidation.js';
 
 const router = express.Router();
+
+router.use(authenticate);
 
 router.get(
   '/notes',
