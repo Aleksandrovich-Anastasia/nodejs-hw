@@ -6,7 +6,7 @@ const { isValidObjectId } = mongoose;
 
 const objectIdValidator = (value, helpers) => {
   if (!isValidObjectId(value)) {
-    return helpers.error('any.invalid'); 
+    return helpers.error('any.invalid');
   }
   return value;
 };
@@ -19,7 +19,7 @@ export const getAllNotesSchema = Joi.object({
 });
 
 export const noteIdSchema = Joi.object({
-  noteId: Joi.string().custom(objectIdValidator, 'ObjectId validation').required(),
+  noteId: Joi.string().custom(objectIdValidator).required(),
 });
 
 export const createNoteSchema = Joi.object({
@@ -28,13 +28,8 @@ export const createNoteSchema = Joi.object({
   tag: Joi.string().valid(...TAGS).optional(),
 });
 
-export const updateNoteSchema = {
-  params: Joi.object({
-    noteId: Joi.string().custom(objectIdValidator, 'ObjectId validation').required(),
-  }),
-  body: Joi.object({
-    title: Joi.string().min(1).optional(),
-    content: Joi.string().allow('').optional(),
-    tag: Joi.string().valid(...TAGS).optional(),
-  }).or('title', 'content', 'tag'),
-};
+export const updateNoteSchema = Joi.object({
+  title: Joi.string().min(1).optional(),
+  content: Joi.string().allow('').optional(),
+  tag: Joi.string().valid(...TAGS).optional(),
+}).or('title', 'content', 'tag');
