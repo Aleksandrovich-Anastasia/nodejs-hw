@@ -11,6 +11,7 @@ import errorHandler from './middleware/errorHandler.js';
 
 import notesRouter from './routes/notesRoutes.js';
 import authRouter from './routes/authRoutes.js';
+import userRouter from './routes/userRoutes.js';
 
 dotenv.config();
 const app = express();
@@ -31,12 +32,11 @@ app.use(
 app.get('/', (req, res) => res.send('OK'));
 
 app.use(authRouter);
+app.use(userRouter); 
 app.use(notesRouter);
 
 app.use(notFoundHandler);
-
 app.use(celebrateErrors());
-
 app.use(errorHandler);
 
 app.listen(PORT, () => {
