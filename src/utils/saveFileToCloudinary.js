@@ -12,11 +12,23 @@ cloudinary.config({
 
 export const saveFileToCloudinary = (buffer) => {
   return new Promise((resolve, reject) => {
+    if (!buffer) {
+      return reject(new Error('No buffer provided'));
+    }
+
     const readable = new Readable();
     readable.push(buffer);
     readable.push(null);
 
-    const stream = cloudinary.uploader.upload_stream((error, result) => {
+    const uploadOptions = {
+      resource_type: 'image',
+      folder: process.env.CLOUDINARY_UPLOAD_FOLDER || 'uploads',
+      overwrite: true,
+      unique_filename: false,
+      use_filename: true,
+    };
+
+    const stream = cloudinary.uploader.upload_stream(uploadOptions, (error, result) => {
       if (error) return reject(error);
       resolve(result);
     });
