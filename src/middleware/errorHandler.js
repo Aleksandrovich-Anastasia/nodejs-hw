@@ -1,6 +1,6 @@
 import createError from 'http-errors';
 
-const errorHandler = (err, req, res, next) => {
+export const errorHandler = (err, req, res, next) => {
   const status = err.status || err.statusCode || 500;
   const isHttpError = err instanceof createError.HttpError;
   const canExposeMessage = isHttpError || Boolean(err.expose);
@@ -19,5 +19,3 @@ const errorHandler = (err, req, res, next) => {
 
   res.status(status).json(payload);
 };
-
-export default errorHandler;
